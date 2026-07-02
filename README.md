@@ -1,6 +1,7 @@
 # Gaia-Create
 
 A high-performance smart incremental compilation tool and offline AI plagiarism guard written in C++17. Designed specifically for student development environments, Gaia-Create serves as a zero-configuration, sub-millisecond alternative to heavy build utilities like GNU Make or CMake for tracking localized sandbox architectures.
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## Project Uniqueness and Core Problem
@@ -35,6 +36,7 @@ gaia-create/
 ├── .gitignore          # Production repository configuration filter
 ├── Makefile            # High-optimization strict compilation script
 └── README.md           # Documentation
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## Environment Setup and Installation
@@ -51,6 +53,7 @@ make
 ### Global Accessibility
 To execute the binary from any directory across your local filesystem, copy it directly to your system path:
 sudo cp gaia-create /usr/local/bin/
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## Local AI Review Suite Setup( Only needed for AI review module)
@@ -66,6 +69,7 @@ Pull down the optimized Llama framework to ensure swift token-generation loops o
 ollama run llama3.2:1b
 
 Note:Once the download completes and displays the interactive chat prompt >>>, type /exit and press Enter. The service will remain active in the background listening on port 11434.
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## CLI Command Reference
