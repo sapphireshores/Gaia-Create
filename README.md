@@ -105,12 +105,14 @@ gaia-create --review /target/project/path
 
   Gaia-Create Performance Profile Metrics:
 
-  --------------------------------------------------------
+   --------------------------------------------------------
 
   • Total Build Time Processing : 0.42 ms
+
   • Targets Recompiled          : 0
+
   • Targets Skipped (Cache Hit) : 3
-  
-  --------------------------------------------------------
+
+   --------------------------------------------------------
 
   Incremental compilation saved 100% of standard build times.
