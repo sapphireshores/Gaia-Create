@@ -43,15 +43,19 @@ Gaia-Create addresses this by:
 
 ### Prerequisites
 Ensure your Linux distribution contains an up-to-date toolchain supporting the C++17 standard:
+
 sudo apt update
+
 sudo apt install build-essential curl python3 -y
 
 ### Build Instructions
 Clone your repository and compile the optimized execution binary:
+
 make
 
 ### Global Accessibility
 To execute the binary from any directory across your local filesystem, copy it directly to your system path:
+
 sudo cp gaia-create /usr/local/bin/
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -62,10 +66,12 @@ The AI review pipeline runs entirely on your local machine via a secure network 
 
 ### 1. Initialize Ollama
 Download and execute the open-source local inference engine:
+
 curl -fsSL https://ollama.com/install.sh | sh
 
 ### 2. Download the Model Core
 Pull down the optimized Llama framework to ensure swift token-generation loops on standard hardware:
+
 ollama run llama3.2:1b
 
 Note:Once the download completes and displays the interactive chat prompt >>>, type /exit and press Enter. The service will remain active in the background listening on port 11434.
