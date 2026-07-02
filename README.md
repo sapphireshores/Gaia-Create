@@ -97,13 +97,20 @@ gaia-create --review /target/project/path
 
 ### Incremental Build Performance
   [1/3] [Updated] math_utils.cpp
+
   [2/3] [Updated] string_utils.cpp
+
   [3/3] [Updated] main.cpp
 
+
   Gaia-Create Performance Profile Metrics:
+
   --------------------------------------------------------
+
   • Total Build Time Processing : 0.42 ms
   • Targets Recompiled          : 0
   • Targets Skipped (Cache Hit) : 3
+  
   --------------------------------------------------------
+
   Incremental compilation saved 100% of standard build times.
