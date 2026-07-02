@@ -26,16 +26,16 @@ Gaia-Create addresses this by:
 
 ## Directory Structure
 
-gaia-create/
-├── include/
-│   └── scan.h          # Component blueprints and class definitions
-├── src/
-│   ├── main.cpp        # CLI flag router
-│   └── scan.cpp        # Graph math, timestamp tracking,native AI socket stream and markdown formatting
-├── test/               # Validation sandbox folder for nested subdirectories
-├── .gitignore          # Production repository configuration filter
-├── Makefile            # High-optimization strict compilation script
-└── README.md           # Documentation
+### gaia-create
+#### include/
+##### scan.h          //Component blueprints and class definitions
+#### src/
+##### main.cpp        // CLI flag router
+##### scan.cpp        // Graph math, timestamp tracking,native AI socket stream and markdown formatting
+#### test/               // Validation sandbox folder for nested subdirectories
+#### .gitignore          // Production repository configuration filter
+#### Makefile            // High-optimization strict compilation script
+#### README.md           // Documentation
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -76,19 +76,19 @@ Note:Once the download completes and displays the interactive chat prompt >>>, t
 
 Gaia-Create uses a flag-driven interface.Commands are executed by providing a task flag followed by the target project path:
 
-# Display graph of directory components' file dependencies
+### Display graph of directory components' file dependencies
 gaia-create --graph /target/project/path
 
-# Display all recursively discovered source files and header targets
+### Display all recursively discovered source files and header targets
 gaia-create --list /target/project/path
 
-# Trace internal includes, map compile queues, and process a smart incremental build
+### Trace internal includes, map compile queues, and process a smart incremental build
 gaia-create --build /target/project/path
 
-# Clear out compiled .o build artifacts
+### Clear out compiled .o build artifacts
 gaia-create --clean /target/project/path
 
-# Run the local AI review audit to scan for AI plagiarism flags
+### Run the local AI review audit to scan for AI plagiarism flags
 gaia-create --review /target/project/path
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
