@@ -27,15 +27,15 @@ Gaia-Create addresses this by:
 ## Directory Structure
 
 ### gaia-create
-#### include/
-##### scan.h          //Component blueprints and class definitions
-#### src/
-##### main.cpp        // CLI flag router
-##### scan.cpp        // Graph math, timestamp tracking,native AI socket stream and markdown formatting
-#### test/               // Validation sandbox folder for nested subdirectories
-#### .gitignore          // Production repository configuration filter
-#### Makefile            // High-optimization strict compilation script
-#### README.md           // Documentation
+#### ├──include/
+#####    └──scan.h          -Component blueprints and class definitions
+#### ├──src/
+#####    ├──main.cpp        - CLI flag router
+#####    └──scan.cpp        - Graph math, timestamp tracking,native AI socket stream and markdown formatting
+#### ├──test/               - Validation sandbox folder for nested subdirectories
+#### ├──.gitignore          - Production repository configuration filter
+#### ├──Makefile            - High-optimization strict compilation script
+#### ├──README.md           - Documentation
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
