@@ -20,30 +20,14 @@ Gaia-Create is a smart incremental build tool that tracks file modifications to 
 - Location-Agnostic: Resolve project builds from any directory via absolute path mapping.
 - Workspace Management: Cleanup of build artifacts.
 
-## Architecture
-
-### Project Folder
-#### │
-#### ▼
-### Filesystem Scanner
-#### │
-#### ▼
-Dependency Graph
-#### │
-#### ▼
-Timestamp Checker
-#### │
-#### ▼
-Incremental Builder
-#### │
-#### ├── Compile
-#### └── Skip
-
 ## Algorithms - Complexity
 
  Dependency Graph Construction - O(V + E) 
+
  DFS Cycle Detection - O(V + E) 
+
  Incremental Scan - O(n) 
+
  Directory Traversal - O(files) 
 
 ## Comparison
@@ -58,32 +42,30 @@ Incremental Builder
 ## Installation
 
 1. Install dependencies:
-   sudo apt update && sudo apt install build-essential curl python3
+- sudo apt update && sudo apt install build-essential curl python3
 
 2. Compile the tool:
-   make
+- make
 
 3. Install globally (creates a system-wide symbolic link):
-
-   sudo rm -rf /usr/local/bin/gaia-create
-   
-   sudo ln -s "$(pwd)/gaia-create" /usr/local/bin/gaia-create
+- sudo rm -rf /usr/local/bin/gaia-create
+- sudo ln -s "$(pwd)/gaia-create" /usr/local/bin/gaia-create
 
 4. Setup for other projects:
-   To use Gaia-Create for any project, simply reference the target directory in the build command. Gaia-Create automatically converts relative paths to absolute paths, ensuring consistent dependency resolution regardless of your current working directory.
+To use Gaia-Create for any project, simply reference the target directory in the build command. Gaia-Create automatically converts relative paths to absolute paths, ensuring consistent dependency resolution regardless of your current working directory.
 
 5. Verify installation:
-   gaia-create --help
+- gaia-create --help
 
 ## Usage
 
 Build a project:
 
-gaia-create --build /path/to/your/project
+- gaia-create --build /path/to/your/project
 
 Run AI review:
 
-gaia-create --review /path/to/your/project
+- gaia-create --review /path/to/your/project
 
 ## Performance Metrics
 
