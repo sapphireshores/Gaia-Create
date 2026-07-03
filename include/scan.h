@@ -21,7 +21,7 @@ public:
     const vector<string>& gtcompord() const { return compord; }
     bool rebuildchk(const filesystem::path& src, const filesystem::path& obj);//check if src needs to be recompiled
     bool exbuild(const filesystem::path& testdir); //executing the build
-    bool validgrp() const;//check graph integrity
+    bool validgrp(const filesystem::path& root) const;//check graph integrity
 
 private:
     vector<filesystem::path>srcfile; //stores srcs i.e. .cpp files

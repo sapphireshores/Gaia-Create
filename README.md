@@ -1,124 +1,105 @@
 # Gaia-Create
 
-A high-performance smart incremental compilation tool and offline AI plagiarism guard written in C++17. Designed specifically for student development environments, Gaia-Create serves as a zero-configuration, sub-millisecond alternative to heavy build utilities like GNU Make or CMake for tracking localized sandbox architectures.
+A lightweight incremental build tool and offline code integrity guard written in C++17.
 
----------------------------------------------------------------------------------------------------------------------------------------------------
+![C++17](https://img.shields.io/badge/C++-17-blue)
+![Linux](https://img.shields.io/badge/Linux-Ubuntu-orange)
+![Build](https://img.shields.io/badge/Build-Make-success)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## Project Uniqueness and Core Problem
+## Problem
+Standard build tools can be complex for small projects, while manual compilation is inefficient and often recompiles unchanged files, wasting computing resources.
 
-Students face a dilemma when building academic projects: choosing between configuration-intensive tools like CMake or running repetitive, manual compilation commands that are computationally intensive and inefficient in caching. 
+## Solution
+Gaia-Create is a smart incremental build tool that tracks file modifications to recompile only modified source files. It includes a static analyzer using local LLMs to detect structural patterns in code and suggest changes.
 
-Gaia-Create addresses this by:
-* Mapping project layouts for optimized compiling flow.
-* Verifying with OS file modification timestamps for selective recompile.
-* Utilizing a localized, private AI review pipeline,that operates completely offline ensuring project files, local data strings, and code logic never leave the host.
----------------------------------------------------------------------------------------------------------------------------------------------------
+## Features
+- Incremental Build: Uses filesystem timestamps to skip unchanged files.
+- Dependency Tracking: Identifies #include chains and circular dependencies.
+- Offline AI Analysis: Integrates with local LLMs (Ollama) to analyze code structure privately.
+- Location-Agnostic: Resolve project builds from any directory via absolute path mapping.
+- Workspace Management: Cleanup of build artifacts.
 
-## Key Features
+## Architecture
 
-* Incremental Build System: Evaluates file modification metadata recursively using std::filesystem::last_write_time. If a source file or its mapped header components have not changed since the last compilation,they are skipped in current cycle.
-* Topological Sorting and Cycle Resolution: Constructs an internal dependency adjacency list and implements a 3-state Depth-First Search algorithm (0: Unvisited, 1: Visiting, 2: Processed) to catch and abort on circular #include blocks before the host compiler enters an infinite loop.
-* Offline AI Plagiarism Review: Processes source logic using local Large Language Models (LLMs) to identify structural AI generated plagiarism patterns.
-* Native Sockets Bridge: Communicates with local background processes using direct, custom TCP network streams rather than relying on inline shell scripting or external utilities.
-* Terminal UI Markdown Decorator: Parses raw markdown text into cleanly formatted terminal outputs using raw ANSI color codes without third-party user interface frameworks.
-* Workspace Clean: Maps directories recursively to safely unlink object files (.o) and build clutter.
----------------------------------------------------------------------------------------------------------------------------------------------------
+### Project Folder
+#### │
+#### ▼
+### Filesystem Scanner
+#### │
+#### ▼
+Dependency Graph
+#### │
+#### ▼
+Timestamp Checker
+#### │
+#### ▼
+Incremental Builder
+#### │
+#### ├── Compile
+#### └── Skip
 
-## Directory Structure
+## Algorithms - Complexity
 
-### gaia-create
-#### ├──include/
-#####    └──scan.h          -Component blueprints and class definitions
-#### ├──src/
-#####    ├──main.cpp        - CLI flag router
-#####    └──scan.cpp        - Graph math, timestamp tracking,native AI socket stream and markdown formatting
-#### ├──test/               - Validation sandbox folder for nested subdirectories
-#### ├──.gitignore          - Production repository configuration filter
-#### ├──Makefile            - High-optimization strict compilation script
-#### ├──README.md           - Documentation
+ Dependency Graph Construction - O(V + E) 
+ DFS Cycle Detection - O(V + E) 
+ Incremental Scan - O(n) 
+ Directory Traversal - O(files) 
 
----------------------------------------------------------------------------------------------------------------------------------------------------
+## Comparison
 
-## Environment Setup and Installation
+| Feature | Make | CMake | Gaia-Create |
+| :--- | :---: | :---: | :---: |
+| Configuration | Complex | Complex | None |
+| Incremental Build | Yes | Yes | Yes |
+| Dependency Graph | Partial | Yes | Yes |
+| Local AI Review | No | No | Yes |
 
-### Prerequisites
-Ensure your Linux distribution contains an up-to-date toolchain supporting the C++17 standard:
+## Installation
 
-sudo apt update
+1. Install dependencies:
+   sudo apt update && sudo apt install build-essential curl python3
 
-sudo apt install build-essential curl python3 -y
+2. Compile the tool:
+   make
 
-### Build Instructions
-Clone your repository and compile the optimized execution binary:
+3. Install globally (creates a system-wide symbolic link):
 
-make
+   sudo rm -rf /usr/local/bin/gaia-create
+   
+   sudo ln -s "$(pwd)/gaia-create" /usr/local/bin/gaia-create
 
-### Global Accessibility
-To execute the binary from any directory across your local filesystem, copy it directly to your system path:
+4. Setup for other projects:
+   To use Gaia-Create for any project, simply reference the target directory in the build command. Gaia-Create automatically converts relative paths to absolute paths, ensuring consistent dependency resolution regardless of your current working directory.
 
-sudo cp gaia-create /usr/local/bin/
+5. Verify installation:
+   gaia-create --help
 
----------------------------------------------------------------------------------------------------------------------------------------------------
+## Usage
 
-## Local AI Review Suite Setup( Only needed for AI review module)
+Build a project:
 
-The AI review pipeline runs entirely on your local machine via a secure network payload channel,without cloud APIs or external internet access.
+gaia-create --build /path/to/your/project
 
-### 1. Initialize Ollama
-Download and execute the open-source local inference engine:
+Run AI review:
 
-curl -fsSL https://ollama.com/install.sh | sh
+gaia-create --review /path/to/your/project
 
-### 2. Download the Model Core
-Pull down the optimized Llama framework to ensure swift token-generation loops on standard hardware:
+## Performance Metrics
 
-ollama run llama3.2:1b
+![Build Summary](docs/output.png)
 
-Note:Once the download completes and displays the interactive chat prompt >>>, type /exit and press Enter. The service will remain active in the background listening on port 11434.
+## Tech Stack
+- Language: C++17
+- Standard Library: STL, filesystem
+- Build: Make
+- AI Backend: Ollama
 
----------------------------------------------------------------------------------------------------------------------------------------------------
+## Future Work
+- Parallel compilation: Implementing multi-threaded execution for faster builds.
+- JSON compilation database: Improving compatibility with IDEs.
+- Windows support: Porting filesystem and socket logic.
+- File hashing: Replacing timestamp checks with content hashing for higher accuracy.
 
-## CLI Command Reference
-
-Gaia-Create uses a flag-driven interface.Commands are executed by providing a task flag followed by the target project path:
-
-### Display graph of directory components' file dependencies
-gaia-create --graph /target/project/path
-
-### Display all recursively discovered source files and header targets
-gaia-create --list /target/project/path
-
-### Trace internal includes, map compile queues, and process a smart incremental build
-gaia-create --build /target/project/path
-
-### Clear out compiled .o build artifacts
-gaia-create --clean /target/project/path
-
-### Run the local AI review audit to scan for AI plagiarism flags
-gaia-create --review /target/project/path
-
----------------------------------------------------------------------------------------------------------------------------------------------------
-
-## Performance Sample
-
-### Incremental Build Performance
-  [1/3] [Updated] math_utils.cpp
-
-  [2/3] [Updated] string_utils.cpp
-
-  [3/3] [Updated] main.cpp
-
-
-  Gaia-Create Performance Profile Metrics:
-
-   --------------------------------------------------------
-
-  • Total Build Time Processing : 0.42 ms
-
-  • Targets Recompiled          : 0
-
-  • Targets Skipped (Cache Hit) : 3
-
-   --------------------------------------------------------
-
-  Incremental compilation saved 100% of standard build times.
+## License
+MIT License

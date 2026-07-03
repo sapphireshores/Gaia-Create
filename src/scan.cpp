@@ -161,7 +161,7 @@ bool Scanner::findcompord() {
 }
 bool Scanner::rebuildchk(const filesystem::path& src,const filesystem::path& obj){
     if(!filesystem::exists(obj)) return true;//if compiled binary file DNE
-
+    try{
     auto srct= filesystem::last_write_time(src);//when src last edited
     auto objt= filesystem::last_write_time(obj);//when obj last edited
     if(srct> objt) return true;//src edited post compile case
@@ -171,16 +171,30 @@ bool Scanner::rebuildchk(const filesystem::path& src,const filesystem::path& obj
         for(const string& dep:grpfile.at(fn)) {
             for(const auto& hf:hdfile) {//find dependency path
                 if(hf.filename().string() == dep){
-                    if (filesystem::last_write_time(hf)>objt){//hd file changed post compile
+                    if (filesystem::exists(hf) && filesystem::last_write_time(hf)>objt){//hd file changed post compile
                         cout<< "\033[36m Change Detected:\033[0m Header file-"<<dep<< " was updated, rebuilding dependent file" <<fn<< "'.\n";
                         return true;
                     }
                 }
             }
         }
-    }
-
+    }}
+    catch (const filesystem::filesystem_error& e) {return true;}//default to rebuilding if something goes wrong
     return false; //file up to date
+}
+string gtincflags(const filesystem::path& root) {
+    string flags="";
+    for(const auto& entry:filesystem::recursive_directory_iterator(root)) {
+        if (entry.is_directory()){
+            for(const auto& file:filesystem::directory_iterator(entry)){//check dir for .h/.hpp files
+                if(file.path().extension()==".h" || file.path().extension()==".hpp") {
+                    flags+= "-I\"" + entry.path().string() + "\" ";
+                    break; //ensure only add once
+                }
+            }
+        }
+    }
+    return flags;
 }
 bool Scanner::exbuild(const filesystem::path& testdir){
     auto strt=chrono::high_resolution_clock::now();
@@ -191,6 +205,7 @@ bool Scanner::exbuild(const filesystem::path& testdir){
     }
     cout<<"\033[34m Executing Smart-Build ...\033[0m\n\n";
     bool changes= false;
+    string incflags = gtincflags(testdir);
     for(const std::string& fn:compord){//toposort sequence order to compile files
         if(filesystem::path(fn).extension()!= ".cpp")continue;//skip non-cpp files 
         processct++;
@@ -204,10 +219,11 @@ bool Scanner::exbuild(const filesystem::path& testdir){
         obj.replace_extension(".o");
         string progress="[" + std::to_string(processct)+"/"+to_string(totalsrc)+"]";//processing status
         if(rebuildchk(src,obj)) {
-            string cmd ="g++ -std=c++17 -I"+testdir.string() + "/include -c "+src.string() + " -o " +obj.string();
+            string cmd = "g++ -std=c++17 " + incflags + " -c \"" + src.string() + "\" -o \"" + obj.string() + "\"";
             cout << "\033[35m"<<progress<<"\033[0m[Compiling] "<<fn<< "\n \033[90m" << cmd << "\033[0m\n";
             int status=system(cmd.c_str());
             if(status != 0) {//if failed compile, show in terminal
+                if(filesystem::exists(obj)) filesystem::remove(obj);//kill curropted obj
                 cerr << "\033[31m Error: Compilation failed for file- " <<fn<< "\033[0m\n";
                 return false;
             }
@@ -225,9 +241,9 @@ bool Scanner::exbuild(const filesystem::path& testdir){
         for(const auto& sf:srcfile) {
             filesystem::path otest=sf;
             otest.replace_extension(".o");
-            linkcmd+= otest.string() + " ";
+            linkcmd+= "\""+otest.string() + "\" ";
         }
-        linkcmd+= "-o "+bintest.string();
+        linkcmd+= "-o \""+bintest.string()+ "\"";
         cout << "\n[Linking Executable] "<< bintest.filename().string()<<"\n \033[90m"<<linkcmd<<"\033[0m\n";
         int status =system(linkcmd.c_str());
         if(status!= 0) {cerr<< "\033[31m Error: Object linking failed due to duplicate symbols or missing references.\033[0m\n";return false;}
@@ -251,43 +267,37 @@ void Scanner::printsum(chrono::microseconds duratn, int compct, int skipct) cons
         cout<< " \033[32m Zero overhead! Incremental compilation saved 100% of standard build times.\033[0m\n\n";
     }
 }
-void Scanner::clearspace(const filesystem::path& testdir) {//remove only generated files
-    std::cout << "\033[35m Scanning workspace built artifacts...\033[0m\n";
+void Scanner::clearspace(const filesystem::path& testdir) {
+    cout<<"\033[35m Scanning workspace for build artifacts...\033[0m\n";
     int delct=0;
 
-    if(!filesystem::exists(testdir) || !filesystem::is_directory(testdir)) {
-        cerr<<"Error: Invalid directory path targeted for cleaning.\n";
+    if (!filesystem::exists(testdir) || !filesystem::is_directory(testdir)) {
+        cerr << "Error: Invalid directory path targeted for cleaning.\n";
         return;
     }
 
-    for(const auto& file: filesystem::recursive_directory_iterator(testdir)){//search generated files to safely unlink
-        if(filesystem::is_regular_file(file.path())) {
-            string ext=file.path().extension().string();
-            string fn=file.path().filename().string();
-            if (ext==".o" || fn=="gaia_output_binary") {
-                cout << "[Removing] " <<filesystem::relative(file.path(),testdir).string()<<"\n";
-                filesystem::remove(file.path());
+    for (const auto& entry:filesystem::recursive_directory_iterator(testdir)) {
+        const auto& path =entry.path();
+        if (path.extension() == ".o" || path.filename() == "gaia_output_bin") {
+            try {
+                filesystem::remove(path);
+                cout << "[Removed] " << path.filename().string() << "\n";
                 delct++;
+            } catch (const filesystem::filesystem_error& e) {
+                cerr << "Error: Could not remove " << path << endl;
             }
         }
     }
-    cout<<"\033[32m  Workspace restored to pristine state!\033[0m Removed "<<delct<<" build artifact(s).\n\n";
+    cout << "\033[32m Workspace pristine! " << delct << " artifact(s) removed.\033[0m\n\n";
 }
-bool Scanner::validgrp() const{//break before build crash
+bool Scanner::validgrp(const filesystem::path& root) const{
     bool pass=true;
-    for (const auto& [file, deps]:grpfile) {
+    for(const auto& [file, deps]:grpfile) {
         for(const string& dep:deps){
-            if(dep.find('.') == string::npos) continue;//to ignore system libraries like <iostream>
-            bool find=false;
-            for(const auto& hf:hdfile) {
-                if(hf.filename().string()==dep){find=true; break; }
-            }
-            for(const auto& sf:srcfile) {
-                if(sf.filename().string()==dep){find=true; break; }
-            }
-            if(!find){
-                cerr << "\033[31m Error:\033[0m " <<file<< " references missing header '\033[4m" << dep << "\033[0m'.\n"<< "  Fix: Please verify that " << dep << " exists inside test directory.\n";
-                pass=false;
+            if(dep.find('<') != string::npos || dep.find('>') != string::npos) continue;//ignore system libraries like <iostream>
+            if (!filesystem::exists(root / dep)){//check path existence relative to project root
+                cerr<<"\033[31m Error:\033[0m "<<file<<" references missing file '\033[4m"<<dep<<"\033[0m'.\n"<< "  Fix: Please verify that "<<dep<<" exists relative to "<<root<<"\n";
+                pass = false;
             }
         }
     }
@@ -354,7 +364,7 @@ void Scanner::aireview(const filesystem::path& testdir) { // ai review using oll
         }
 
         //prompt for local model
-        string prompt ="Review this C++ code for AI-generated plagiarism and flag if the code contains overly optimized patterns for a student, suspiciously flawless comments or syntax and semantics of LLMs. Give bulleted suggestions for changes to make for prevention of code being flagged as AI generated and make it look more human and authentic. Code: " + escontent;
+        string prompt ="Analyze the provided C++ source code for: 1. Pattern Recognition: Identify boilerplate or over-engineered logic that can be simplified.2. Style Consistency: Check for structural symmetry, naming conventions, and comment quality.3. Integrity Assessment: Analyze structural patterns for potential AI-generated code characteristics.4. Optimization Hints: Suggest specific ways to refactor complex dependency logic to reduce technical debt.Format the response in clear, concise bullet points. Code:" + escontent;
 
         ofstream payload(".payload.json");//temporary file having payload to prevent inline parsing errors
         if (!payload.is_open()) {
