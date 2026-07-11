@@ -78,7 +78,7 @@ Run AI review:
 - AI Backend: Ollama
 
 ## Future Work
-- Parallel compilation: Implementing multi-threaded execution for faster builds.
+- Parallel compilation: Implementing multi-threaded execution for faster builds.(Completed!)
 - JSON compilation database: Improving compatibility with IDEs.
 - Windows support: Porting filesystem and socket logic.
 - File hashing: Replacing timestamp checks with content hashing for higher accuracy.
