@@ -196,63 +196,83 @@ string gtincflags(const filesystem::path& root) {
     }
     return flags;
 }
-bool Scanner::exbuild(const filesystem::path& testdir){
-    auto strt=chrono::high_resolution_clock::now();
-    int processct=0,compct =0,skipct=0,totalsrc=0;//calculate processed(till that instant), compiled, skipped and total files count
+mutex cout_mutex;
 
-    for(const std::string& fn:compord) {
-        if (filesystem::path(fn).extension()==".cpp")totalsrc++;
+bool Scanner::exbuild(const filesystem::path& testdir) {
+    auto strt = chrono::high_resolution_clock::now();
+    int processct = 0, compct = 0, skipct = 0, totalsrc = 0;
+
+    for (const std::string& fn : compord) {
+        if (filesystem::path(fn).extension() == ".cpp") totalsrc++;
     }
-    cout<<"\033[34m Executing Smart-Build ...\033[0m\n\n";
-    bool changes= false;
+
+    cout << "\033[34m Executing Parallel Smart-Build ...\033[0m\n\n";
+    
+    bool changes = false;
     string incflags = gtincflags(testdir);
-    for(const std::string& fn:compord){//toposort sequence order to compile files
-        if(filesystem::path(fn).extension()!= ".cpp")continue;//skip non-cpp files 
+    std::vector<std::future<bool>> futures;
+
+    for (const std::string& fn : compord) {
+        if (filesystem::path(fn).extension() != ".cpp") continue;
         processct++;
 
         filesystem::path src;
-        for(const auto& sf:srcfile){//reconstrusct path to locate src file
-            if(sf.filename().string() ==fn){src= sf; break; }
+        for (const auto& sf : srcfile) {
+            if (sf.filename().string() == fn) { src = sf; break; }
         }
 
-        filesystem::path obj =src;//map main.cpp to main.o
+        filesystem::path obj = src;
         obj.replace_extension(".o");
-        string progress="[" + std::to_string(processct)+"/"+to_string(totalsrc)+"]";//processing status
-        if(rebuildchk(src,obj)) {
-            string cmd = "g++ -std=c++17 " + incflags + " -c \"" + src.string() + "\" -o \"" + obj.string() + "\"";
-            cout << "\033[35m"<<progress<<"\033[0m[Compiling] "<<fn<< "\n \033[90m" << cmd << "\033[0m\n";
-            int status=system(cmd.c_str());
-            if(status != 0) {//if failed compile, show in terminal
-                if(filesystem::exists(obj)) filesystem::remove(obj);//kill curropted obj
-                cerr << "\033[31m Error: Compilation failed for file- " <<fn<< "\033[0m\n";
-                return false;
-            }
+        string progress = "[" + std::to_string(processct) + "/" + to_string(totalsrc) + "]";
+
+        if (rebuildchk(src, obj)) {
+            // Launch compilation in background
+            futures.push_back(std::async(std::launch::async, [=]() {
+                string cmd = "g++ -std=c++17 " + incflags + " -c \"" + src.string() + "\" -o \"" + obj.string() + "\"";
+                
+                std::lock_guard<std::mutex> lock(cout_mutex);
+                cout << "\033[35m" << progress << "\033[0m[Compiling] " << fn << "\n";
+                
+                return (system(cmd.c_str()) == 0);
+            }));
             compct++;
-            changes= true;
+            changes = true;
         } else {
-            cout <<"\033[32m"<<progress<<"[Updated] " <<fn<< "\n";//else show compile done
+            cout << "\033[32m" << progress << "[Updated] " << fn << "\n";
             skipct++;
         }
     }
 
-    filesystem::path bintest= testdir/ "gaia_output_bin";//linking into final binary executable if updated
-    if(changes|| !filesystem::exists(bintest)) {
-        string linkcmd="g++ -std=c++17 ";
-        for(const auto& sf:srcfile) {
-            filesystem::path otest=sf;
-            otest.replace_extension(".o");
-            linkcmd+= "\""+otest.string() + "\" ";
+    // Wait for all compilations to complete and check for errors
+    for (auto& f : futures) {
+        if (!f.get()) {
+            cerr << "\033[31m Error: A background compilation task failed.\033[0m\n";
+            return false;
         }
-        linkcmd+= "-o \""+bintest.string()+ "\"";
-        cout << "\n[Linking Executable] "<< bintest.filename().string()<<"\n \033[90m"<<linkcmd<<"\033[0m\n";
-        int status =system(linkcmd.c_str());
-        if(status!= 0) {cerr<< "\033[31m Error: Object linking failed due to duplicate symbols or missing references.\033[0m\n";return false;}
     }
-    cout<< "\n\033[32m Build sequence completed successfully!\033[0m\n";
-    auto end=chrono::high_resolution_clock::now();
-    auto duratn=chrono::duration_cast<chrono::microseconds>(end-strt);
 
-    printsum(duratn,compct,skipct);//return summary
+    // Linking Phase (sequential)
+    filesystem::path bintest = testdir / "gaia_output_bin";
+    if (changes || !filesystem::exists(bintest)) {
+        string linkcmd = "g++ -std=c++17 ";
+        for (const auto& sf : srcfile) {
+            filesystem::path otest = sf;
+            otest.replace_extension(".o");
+            linkcmd += "\"" + otest.string() + "\" ";
+        }
+        linkcmd += "-o \"" + bintest.string() + "\"";
+        
+        cout << "\n[Linking Executable] " << bintest.filename().string() << "\n";
+        if (system(linkcmd.c_str()) != 0) {
+            cerr << "\033[31m Error: Object linking failed.\033[0m\n";
+            return false;
+        }
+    }
+
+    auto end = chrono::high_resolution_clock::now();
+    auto duratn = chrono::duration_cast<chrono::microseconds>(end - strt);
+    cout << "\n\033[32m Build sequence completed successfully!\033[0m\n";
+    printsum(duratn, compct, skipct);
     return true;
 }
 void Scanner::printsum(chrono::microseconds duratn, int compct, int skipct) const{//printing smart build metrice
