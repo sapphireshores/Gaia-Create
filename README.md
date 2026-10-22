@@ -86,10 +86,10 @@ Clean build artifacts:
 - **AI Backend:** Ollama (Llama 3.2 1B)
 
 ## Future Work
--Parallel compilation: Implementing multi-threaded execution for faster builds.(Completed!)   
--JSON compilation database: Improving compatibility with IDEs.(Completed!)  
--Windows support: Porting filesystem and socket logic.(Completed!)
--File hashing: Replacing timestamp checks with content hashing for higher accuracy.(Completed!)
+- Parallel compilation: Implementing multi-threaded execution for faster builds.(Completed!)   
+- JSON compilation database: Improving compatibility with IDEs.(Completed!)  
+- Windows support: Porting filesystem and socket logic.(Completed!)
+- File hashing: Replacing timestamp checks with content hashing for higher accuracy.(Completed!)
 
 ## License
 MIT License
